@@ -26,6 +26,13 @@ file (GLOB PY_WRAPPER "message_infrastructure/csrc/message_infrastructure_py_wra
 find_package(pybind11 CONFIG)
 
 add_library(multi_processing SHARED ${MULTI_PROC_SRCS})
+add_library(multi_processing SHARED ${MULTI_PROC_SRCS})
+add_library(abstract_port SHARED ${ABSTRACT_PORT_SRCS})
+add_library(port SHARED ${PORT_SRCS})
+add_library(transformer SHARED ${TRANSFORMER_SRCS})
 
 pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER})
 target_link_libraries(MessageInfrastructurePywrapper PRIVATE multi_processing)
+target_link_libraries(MessageInfrastructurePywrapper PRIVATE abstract_port)
+target_link_libraries(MessageInfrastructurePywrapper PRIVATE port)
+target_link_libraries(MessageInfrastructurePywrapper PRIVATE transformer)
