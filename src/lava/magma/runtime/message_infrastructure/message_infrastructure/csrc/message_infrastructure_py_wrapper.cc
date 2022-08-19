@@ -2,17 +2,22 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
+#include <memory>
+
 #include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "multiprocessing.h"
 #include "abstract_actor.h"
+#include "channel_factory.h"
+#include "multiprocessing.h"
+#include "port_proxy.h"
 #include "shm.h"
-// #include "shmem_channel.h"
-// #include "shmem_port.h"
 #include "ports.h"
 #include "transformer.h"
+#include "shmem_channel.h"
+#include "shmem_port.h"
+#include "utils.h"
 
 namespace message_infrastructure {
 
@@ -34,34 +39,52 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def(py::init<>())
     .def("alloc_mem", &SharedMemManager::AllocSharedMemory)
     .def("stop", &SharedMemManager::Stop);
+  py::class_<SharedMemory> (m, "SharedMemory")
+    .def(py::init<>());
   py::class_<PosixActor> (m, "Actor")
     .def("wait", &PosixActor::Wait)
     .def("stop", &PosixActor::Stop)
     .def("get_status", &PosixActor::GetStatus);
     // .def("trace", &PosixActor::Trace);
-  
-  /*
-  py::class_<ShmemSendPort> (m, "ShmemSendPort")
-    .def(py::init<std::string, SharedMemory*, Proto*, size_t, sem_t*, sem_t*>())
-    .def("start", &ShmemSendPort::Start)
-    .def("probe", &ShmemSendPort::Probe)
-    .def("send", &ShmemSendPort::Send)
-    .def("join", &ShmemSendPort::Join)
-    .def("ack_callback", &ShmemSendPort::_ack_callback);
-  py::class_<ShmemRecvPort> (m, "ShmemRecvPort")
-    .def(py::init<std::string, SharedMemory*, Proto*, size_t, sem_t*, sem_t*>())
-    .def("start", &ShmemRecvPort::Start)
-    .def("probe", &ShmemRecvPort::Probe)
-    .def("recv", &ShmemRecvPort::Recv)
-    .def("join", &ShmemRecvPort::Join)
-    .def("peek", &ShmemRecvPort::Peek)
-    .def("req_callback", &ShmemRecvPort::_req_callback);
+  py::enum_<ChannelType> (m, "ChannelType")
+    .value("SHMEMCHANNEL", SHMEMCHANNEL)
+    .value("RPCCHANNEL", RPCCHANNEL)
+    .value("DDSCHANNEL", DDSCHANNEL);
   py::class_<ShmemChannel> (m, "ShmemChannel")
-    .def(py::init<SharedMemory*, std::string, std::string, ssize_t*, DataType, size_t>())
-    .def("get_srcport", &ShmemChannel::GetSrcPort, return_value_policy::reference)
-    .def("get_dstport", &ShmemChannel::GetDstPort, return_value_policy::reference);
-  m.def("get_shmemchannel", &GetShmemChannel, return_value_policy::reference);
-  */
+    .def("get_send_port", &ShmemChannel::GetSendPort)
+    .def("get_recv_port", &ShmemChannel::GetRecvPort);
+  py::class_<SendPortProxy> (m, "SendPortProxy")
+    .def(py::init<ChannelType, AbstractSendPortPtr>())
+    .def("get_channel_type", &SendPortProxy::GetChannelType)
+    .def("get_send_port", &SendPortProxy::GetSendPort)
+    .def("start", &SendPortProxy::Start)
+    .def("probe", &SendPortProxy::Probe)
+    .def("send", &SendPortProxy::Send)
+    .def("join", &SendPortProxy::Join)
+    .def("name", &SendPortProxy::Name)
+    .def("dtype", &SendPortProxy::Dtype)
+    .def("shape", &SendPortProxy::Shape)
+    .def("size", &SendPortProxy::Size);
+  py::class_<RecvPortProxy> (m, "RecvPortProxy")
+    .def(py::init<ChannelType, AbstractRecvPortPtr>())
+    .def("get_channel_type", &RecvPortProxy::GetChannelType)
+    .def("get_recv_port", &RecvPortProxy::GetRecvPort)
+    .def("start", &RecvPortProxy::Start)
+    .def("probe", &RecvPortProxy::Probe)
+    .def("recv", &RecvPortProxy::Recv)
+    .def("peek", &RecvPortProxy::Peek)
+    .def("join", &RecvPortProxy::Join)
+    .def("name", &RecvPortProxy::Name)
+    .def("dtype", &RecvPortProxy::Dtype)
+    .def("shape", &RecvPortProxy::Shape)
+    .def("size", &RecvPortProxy::Size);
+  py::class_<ChannelFactory> (m, "ChannelFactory")
+    .def("get_channel", &ChannelFactory::GetChannel<double>)
+    .def("get_channel", &ChannelFactory::GetChannel<std::int16_t>)
+    .def("get_channel", &ChannelFactory::GetChannel<std::int32_t>)
+    .def("get_channel", &ChannelFactory::GetChannel<std::int64_t>)
+    .def("get_channel", &ChannelFactory::GetChannel<float>);
+  m.def("get_channel_factory", GetChannelFactory, py::return_value_policy::reference);
 
   py::class_<AbstractCppPort> (m, "AbstractPyPort")
     .def(py::init<>());

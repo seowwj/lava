@@ -26,18 +26,22 @@ template<class T>
 class ShmemSendPort : public AbstractSendPort {
  public:
   ShmemSendPort(const std::string &name,
-                SharedMemory *shm,
+                SharedMemoryPtr shm,
                 Proto *proto,
                 const size_t &size,
                 sem_t *req,
                 sem_t *ack);
+  std::string Name();
+  pybind11::dtype Dtype();
+  ssize_t* Shape();
+  size_t Size();
   int Start();
   int Probe();
   int Send();
   int Join();
-  int _ack_callback();
+  int AckCallback();
 
-  SharedMemory *shm_ = NULL;
+  SharedMemoryPtr shm_ = NULL;
   sem_t *req_ = NULL;
   sem_t *ack_ = NULL;
   int idx_ = 0;
@@ -51,19 +55,23 @@ template<class T>
 class ShmemRecvPort : public AbstractRecvPort {
  public:
   ShmemRecvPort(const std::string &name,
-                SharedMemory *shm,
+                SharedMemoryPtr shm,
                 Proto *proto,
                 const size_t &size,
                 sem_t *req,
                 sem_t *ack);
+  std::string Name();
+  pybind11::dtype Dtype();
+  ssize_t* Shape();
+  size_t Size();
   int Start();
   int Probe();
   int Recv();
   int Join();
   int Peek();
-  int _req_callback();
+  int ReqCallback();
 
-  SharedMemory *shm_ = NULL;
+  SharedMemoryPtr shm_ = NULL;
   sem_t *req_ = NULL;
   sem_t *ack_ = NULL;
   int idx_ = 0;
