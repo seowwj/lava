@@ -3,8 +3,8 @@ project(message_passing)
 
 set (CMAKE_CXX_STANDARD 17)
 
-option(PY_WRAPPER "Use pybind11 to wrapper the message infrastructure lib" ON)
-if(PY_WRAPPER)
+option(USE_PYBIND11 "Use pybind11 to wrapper the message infrastructure lib" ON)
+if(USE_PYBIND11)
     find_package(pybind11 REQUIRED)
 endif()
 
@@ -17,26 +17,17 @@ set (MESSAGE_INFRASTRUCTURE_SRCS
      "message_infrastructure/csrc/transformer.cc"
      )
 
-file (GLOB PY_WRAPPER_SRCS
-    "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc"
-    "message_infrastructure/csrc/py_middle_layer.cc"
-    )
+file (GLOB PY_WRAPPER "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc")
 
 add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
 
-if(PY_WRAPPER)
+if(USE_PYBIND11)
     target_include_directories(message_infrastructure PUBLIC 
                                ${pybind11_INCLUDE_DIRS}
-                               ${PYTHON_INCLUDE_DIRS}
                                ${PROJECT_SOURCE_DIR}/message_infrastructure/csrc
                                )
-    exec_program(${PYTHON_EXECUTABLE}
-                 ARGS "-c \"import numpy; print(numpy.get_include())\""
-                 OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
-                 RETURN_VALUE NUMPY_NOT_FOUND
-    )
 
-    pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER_SRCS})
+    pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER})
     target_link_libraries(MessageInfrastructurePywrapper PRIVATE message_infrastructure)
 else()
     target_include_directories(message_infrastructure PUBLIC 
