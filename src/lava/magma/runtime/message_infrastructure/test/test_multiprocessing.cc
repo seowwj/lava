@@ -56,7 +56,7 @@ TEST(TestMultiprocessing, MultiprocessingSpawn) {
   std::cout << "Actor List Length --> " << actorList.size() << std::endl;
   for (auto actor : actorList){
     int actorStatus = actor->GetStatus();
-    EXPECT_EQ(actorStatus, 0);
+    EXPECT_EQ(actorStatus, ActorStatus::StatusRunning);
   }
   
   // Stop any currently running actors
@@ -86,6 +86,6 @@ TEST(TestMultiprocessing, ActorForceStop) {
     actor->ForceStop();
     int actorStatus = actor->GetStatus();
     // std::cout << actorStatus;
-    EXPECT_EQ(actorStatus, 2);
+    EXPECT_EQ(actorStatus, ActorStatus::StatusTerminated);
   }
 }
