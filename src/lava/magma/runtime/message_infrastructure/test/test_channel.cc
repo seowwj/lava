@@ -26,7 +26,7 @@ void ActorStop() {
 }
 
 py::array_t<int32_t> Data() {
-  py::array_t<int32_t> data = py::array_t<int32_t>({1, 2, 3, 4});
+  py::array_t<int32_t> data = py::array_t<int32_t>({1, 2, 3, 4, 5});
   return data;
 }
 
@@ -64,8 +64,8 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
   // TODO: Define success criteria
 
   // Create Shared Memory Channel
-  int size = 1;
-  int nbytes = sizeof(int);
+  int size = 5;
+  int nbytes = sizeof(int32_t);
   std::string name = "test_shmem_channel";
   std::string src_name = "Source1";
   std::string dst_name = "Dest1";
@@ -103,15 +103,29 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
 }
 
 TEST(TestSharedMemory, SharedMemSingleProcess){
-  // ChannelProxy ShmemChannel;
+  int size = 5;
+  int nbytes = sizeof(int32_t);
+  std::string name = "test_shmem_channel";
+  std::string src_name = "Source2";
+  std::string dst_name = "Dest2";
+  auto shmem_channel = ShmemChannel(
+    src_name,
+    dst_name,
+    size,
+    nbytes);
+  
+  AbstractSendPortPtr send_port = shmem_channel.GetSendPort();
+  AbstractRecvPortPtr recv_port = shmem_channel.GetRecvPort();
 
-  // SendPortProxyPtr SendPort = ShmemChannel.GetSendPort();
-  // RecvPortProxyPtr RecvPort = ShmemChannel.GetRecvPort();
+  send_port->Start();
+  recv_port->Start();
 
-  // SendPort.Start();
-  // RecvPort.Start();
-  // auto data = DataInteger();
-  // SendPort.Send(data);
-  // auto received_data = RecvPort.Recv();
-  // EXPECT_EQ(data, received_data)
+  MetaDataPtr data;
+  send_port->Send(data);
+  auto received_data = recv_port->Recv();
+
+  EXPECT_EQ(data, received_data);
+
+  send_port->Join();
+  recv_port->Join();
 }
